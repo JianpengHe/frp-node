@@ -1,4 +1,4 @@
-import { promises } from "fs";
+/** 这个文件没用的，用来测试加密 */
 import { connectAndVerify, connectToken, createVerifyServer, EcsToken } from "./utils";
 createVerifyServer(123, connectToken, con => {
   console.log("连接成功");
