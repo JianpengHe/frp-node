@@ -1,4 +1,5 @@
 import { createServer, Socket } from "net";
+import { exec } from "child_process";
 import { checkSocketAlive, connectAndVerify, connectPort, connectToken, createCipher, createDecipher, createVerifyServer, EcsIp, EcsPort, EcsToken, localListenPort, log } from "./utils";
 
 /** 你想连的frpc的Id */
@@ -9,14 +10,14 @@ const localSocketPool = new Map<number, Socket>();
 
 /** 如果配置了Ecs，则自动发送请求，要Ecs转告frpc */
 if (EcsToken && EcsIp && EcsPort) {
-  connectAndVerify(EcsPort, EcsIp, EcsToken, wantToConnect + 60)
+  connectAndVerify(EcsPort, EcsIp, EcsToken, wantToConnect + 60, e => {
+    log("通知Ecs失败");
+    console.error(e);
+  })
     .then(socket => {
       socket.end();
     })
-    .catch(e => {
-      log("通知Ecs失败");
-      console.error(e);
-    });
+    .catch();
 }
 
 /** 与本机应用通讯用 */
@@ -47,6 +48,7 @@ createServer(newLocalSocket => {
 createVerifyServer(connectPort, connectToken, (newConnectSocket, id) => {
   if (id === 120) {
     log("frpc已连接");
+    exec("mstsc /v t.hejianpeng.com:3389 /f", () => {});
     localSocketPool.set(id, newConnectSocket);
     return;
   }

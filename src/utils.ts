@@ -10,22 +10,22 @@ import { createHash, createCipheriv, createDecipheriv } from "crypto";
 export const SHA1 = (buf: Buffer) => createHash("sha1").update(buf).digest();
 
 /** 云服务器监听的端口 */
-export const EcsPort = 45345;
+export const EcsPort = 61587;
 /** 云服务器IP */
-export const EcsIp = "xxx.hejianpeng.cn";
+export const EcsIp = "sz.hejianpeng.cn";
 /** 云服务器验证密钥 */
-export const EcsToken = SHA1(Buffer.from("xxx"));
+export const EcsToken = SHA1(Buffer.from("97f30128fc46aa6490dfccd5c3c8f99d0f4fad87"));
 
 /** 直连通信用的端口（必须与frpc的connectPort相同，路由器等防火墙要放行该端口） */
-export const connectPort = 60000;
+export const connectPort = 60006;
 /** 直连通信验证密钥 */
-export const connectToken = SHA1(Buffer.from("xxxxx"));
+export const connectToken = SHA1(Buffer.from("71c915b0669083a4abc25f761bb5bc20989050f1"));
 
 /** frps本地监听的端口 */
 export const localListenPort = 3389;
 
 /** frpc本地连接的端口 */
-export const localConnectPort = 3306;
+export const localConnectPort = 60008;
 
 /** 验证超时（毫秒） */
 export const verifyTimeout = 9999;
@@ -55,7 +55,7 @@ export const createDecipher = (token: Buffer) => {
   return cipher;
 };
 /** 建立一个tcp连接，并发送验证信息 */
-export const connectAndVerify = (port: number, host: string, token: Buffer, no?: number): Promise<Socket> =>
+export const connectAndVerify = (port: number, host: string, token: Buffer, no: number, errFn: (reason: any) => void): Promise<Socket> =>
   new Promise((resolve, reject) => {
     const time = Math.ceil(new Date().getTime() / 1000) + verifyTimeout;
     const rand = SHA1(Buffer.from(String(Math.random())));
@@ -76,29 +76,42 @@ export const connectAndVerify = (port: number, host: string, token: Buffer, no?:
       cipher.on("error", () => {});
     });
 
-    let isDone = false;
-    const timer = setTimeout(() => {
-      if (isDone) {
-        return;
-      }
-      reject(new Error("连接超时"));
-      if (checkSocketAlive(con)) {
-        con.end();
-      }
-    }, verifyTimeout);
+    // let isDone = false;
+    // const timer = setTimeout(() => {
+    //   if (isDone) {
+    //     return;
+    //   }
+    //  // reject(new Error("连接超时"));
+    //   errFn(new Error("连接超时"));
+    //   if (checkSocketAlive(con)) {
+    //     con.end();
+    //   }
+    // }, verifyTimeout);
     con.once("readable", () => {
-      if (con.readableLength >= 1 && isDone === false) {
-        isDone = true;
-        clearTimeout(timer);
+      if (
+        con.readableLength >= 1
+        // && isDone === false
+      ) {
+        // isDone = true;
+        // clearTimeout(timer);
         if (con.read(1)[0]) {
           resolve(con);
         } else {
           reject(new Error("密钥错误"));
+          errFn(new Error("密钥错误"));
           if (checkSocketAlive(con)) {
             con.end();
           }
         }
       }
+      if (con.isPaused()) {
+        con.resume();
+      }
+    });
+    con.on("error", err => {
+      errFn(err);
+      // isDone = true;
+      // clearTimeout(timer);
     });
   });
 /** 创建一个需要验证的服务器 */
@@ -138,6 +151,9 @@ export const createVerifyServer = (port: number, token: Buffer, connectionListen
           cipher.on("error", () => {});
           cipher.end();
         }
+      }
+      if (con.isPaused()) {
+        con.resume();
       }
     });
   }).listen(port);

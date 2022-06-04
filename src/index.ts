@@ -5,7 +5,7 @@ createVerifyServer(123, connectToken, con => {
   con.on("data", d => console.log(d));
 });
 setTimeout(() => {
-  connectAndVerify(123, "127.0.0.1", connectToken)
+  connectAndVerify(123, "127.0.0.1", connectToken, 1, () => {})
     .then(c => c.write(Buffer.from("abc")))
     .catch(a => console.error(a));
 }, 2000);
