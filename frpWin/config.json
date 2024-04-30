@@ -1,0 +1,12 @@
+{
+  "serverHost": "xxx.xxx.xxx.xxx",
+  "frpsCryptoPort": 25345,
+  "frpsPort": 35457,
+  "token": "xxx",
+  "frpcPort": 58568,
+  "client": {
+    "localPort": 3389,
+    "remotePort": 61861,
+    "name": "name"
+  }
+}
