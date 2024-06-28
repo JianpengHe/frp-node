@@ -12,7 +12,10 @@ net
     localSock.on("close", e => remoteSock.writable && remoteSock.end());
     remoteSock.on("error", e => localSock.writable && localSock.end());
   })
-  .listen(frpsCryptoPort, () => {
-    console.log("net.createServer 成功");
-    spawn(__dirname + "/frps.exe", [`-c`, path.resolve(__dirname, "frps.ini")], { cwd: __dirname });
+  .listen(frpsCryptoPort, async () => {
+    console.log(new Date().toLocaleString(), "net.createServer 成功");
+    while (1) {
+      console.log(new Date().toLocaleString(), "启动frps.exe");
+      await spawn(__dirname + "/frps.exe", [`-c`, path.resolve(__dirname, "frps.ini")], { cwd: __dirname });
+    }
   });

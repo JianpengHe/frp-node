@@ -14,7 +14,10 @@ net
     localSock.on("close", e => remoteSock.writable && remoteSock.end());
     remoteSock.on("error", e => localSock.writable && localSock.end());
   })
-  .listen(frpcPort, "127.0.0.1", () => {
-    console.log("net.createServer 成功");
-    spawn(__dirname + "/frpc.exe", [`-c`, path.resolve(__dirname, "frpc.ini")], { cwd: __dirname });
+  .listen(frpcPort, "127.0.0.1", async () => {
+    console.log(new Date().toLocaleString(), "net.createServer 成功");
+    while (1) {
+      console.log(new Date().toLocaleString(), "启动frpc.exe");
+      await spawn(__dirname + "/frpc.exe", [`-c`, path.resolve(__dirname, "frpc.ini")], { cwd: __dirname });
+    }
   });
